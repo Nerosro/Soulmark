@@ -1,0 +1,13 @@
+{
+  "itemGroup.soulmark": "Example Mod Tab",
+  "block.soulmark.example_block": "Example Block",
+  "item.soulmark.example_item": "Example Item",
+
+  "soulmark.configuration.title": "SoulMark Configs",
+  "soulmark.configuration.section.soulmark.common.toml": "SoulMark Configs",
+  "soulmark.configuration.section.soulmark.common.toml.title": "SoulMark Configs",
+  "soulmark.configuration.items": "Item List",
+  "soulmark.configuration.logDirtBlock": "Log Dirt Block",
+  "soulmark.configuration.magicNumberIntroduction": "Magic Number Text",
+  "soulmark.configuration.magicNumber": "Magic Number"
+}
