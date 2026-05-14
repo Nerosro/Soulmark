@@ -1,25 +1,58 @@
+# Soulmark
 
-Installation information
-=======
+A shared player framework mod for **Minecraft 26.1.2** built on **NeoForge**.
 
-This template repository can be directly cloned to get you started with a new
-mod. Simply create a new repository cloned from this one, by following the
-instructions provided by [GitHub](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template).
+Soulmark provides the core player data systems that multiple job mods — such as **Elemancy** — can build on top of. It stores and exposes baseline player stats while letting job mods decide what those values mean in gameplay.
 
-Once you have your clone, simply open the repository in the IDE of your choice. The usual recommendation for an IDE is either IntelliJ IDEA or Eclipse.
+## Features
 
-If at any point you are missing libraries in your IDE, or you've run into problems you can
-run `gradlew --refresh-dependencies` to refresh the local cache. `gradlew clean` to reset everything 
-{this does not affect your code} and then start the process again.
+### Mana System
+- **Mana pool** and **mana regen rate** are rolled once on first spawn and inversely tied — higher pool means lower regen and vice versa.
+- Mana regeneration resumes after a configurable delay following each cast.
+- Mana is personal, internal, and cannot be bypassed — no free casting.
+- Pool and regen can be modified at runtime by traits, gear, trinkets, and skills.
 
-Mapping Names:
-============
-By default, the MDK is configured to use the official mapping names from Mojang for methods and fields 
-in the Minecraft codebase. These names are covered by a specific license. All modders should be aware of this
-license. For the latest license text, refer to the mapping file itself, or the reference copy here:
-https://github.com/NeoForged/NeoForm/blob/main/Mojang.md
+### Affinity
+- A core magical leaning randomly assigned at character creation.
+- Job mods interpret affinity in their own way (e.g. elemental attunement, alignment triggers).
 
-Additional Resources: 
-==========
-Community Documentation: https://docs.neoforged.net/  
-NeoForged Discord: https://discord.neoforged.net/
+### Trait System
+- Each player receives **3 traits** on first spawn: one Boost, one Neutral, and one Penalty.
+- Traits are selected via **weighted random rolls** with rarity tiers: Common, Uncommon, Rare, Legendary, and Exotic.
+- Constraints enforced:
+  - Maximum **1 Legendary+** trait per player.
+  - At least **1 Rare+** among the three traits.
+  - The exclusive **Markless** trait cancels all other traits.
+- Trait content is provided by job mods; Soulmark owns the framework and rolling logic. Job mods may register multiple variants of a trait at different weight tiers.
+
+### Skill Tree
+- A generic unlock framework for skill nodes.
+- Tracks unlocked nodes and points spent per player.
+- Supports configurable point caps.
+- Job mods define the actual tree structure and node content.
+
+### Shared Stat Framework
+| Stat | Description |
+|------|-------------|
+| Mana Pool | Total available mana capacity |
+| Mana Regen | Baseline mana recovery rate |
+| Mana Regen Delay | Delay before recovery resumes after casting |
+| Affinity | Natural magical resonance |
+| Traits | Rolled trait set (Boost / Neutral / Penalty) |
+
+## Design Philosophy
+
+- **Soulmark stores the truth** — job mods present it through their own class-specific tools (Tome, adventurer's license, orb, etc.).
+- **No universal stat screen** — each job mod filters for what matters to its players.
+- **Cross-mod interaction is intentional** — combined installs should feel deeper, not isolated.
+- **Futureproof early, implement incrementally** — data structures anticipate real extension points, but complexity is added in small steps.
+
+## Dependencies
+
+- **Minecraft** 26.1.2
+- **NeoForge** 26.1.2.48-beta
+- **Curios API** 15.0.0-beta.2
+
+## License
+
+MIT License
