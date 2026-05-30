@@ -6,6 +6,10 @@
   "soulmark.configuration.title": "SoulMark Configs",
   "soulmark.configuration.section.soulmark.common.toml": "SoulMark Configs",
   "soulmark.configuration.section.soulmark.common.toml.title": "SoulMark Configs",
+
+  "key.category.soulmark.keys": "SoulMark",
+  "key.soulmark.open_skill_tree": "Open Skill Tree",
+
   "soulmark.configuration.items": "Item List",
   "soulmark.configuration.logDirtBlock": "Log Dirt Block",
   "soulmark.configuration.magicNumberIntroduction": "Magic Number Text",
