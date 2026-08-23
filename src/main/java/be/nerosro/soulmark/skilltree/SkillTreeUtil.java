@@ -1,6 +1,7 @@
 package be.nerosro.soulmark.skilltree;
 
 import be.nerosro.soulmark.capability.SoulmarkAttachments;
+import be.nerosro.soulmark.soulpoint.SoulPointPayment;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.player.Player;
@@ -9,6 +10,8 @@ import net.neoforged.fml.ModList;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Public utility API for the skill tree system.
@@ -42,7 +45,8 @@ public final class SkillTreeUtil {
         EXCLUDED,
         HIDDEN,
         NOT_VISIBLE,
-        INSUFFICIENT_POINTS
+        INSUFFICIENT_POINTS,
+        PAYMENT_UNAVAILABLE
     }
 
     /**
@@ -88,8 +92,9 @@ public final class SkillTreeUtil {
         // Check visibility — must be UNLOCKABLE (distance 1) to unlock
         if (getVisibility(data, nodeId) != NodeVisibility.UNLOCKABLE) return UnlockResult.NOT_VISIBLE;
 
-        // Spend from shared wallet (use node's cost)
-        if (!SkillPointUtil.trySpend(player, node.cost())) return UnlockResult.INSUFFICIENT_POINTS;
+        SkillTreePayment payment = getPayment(node);
+        if (payment == null) return UnlockResult.PAYMENT_UNAVAILABLE;
+        if (!payment.trySpend(player, node.cost())) return UnlockResult.INSUFFICIENT_POINTS;
 
         // Perform the unlock
         data.unlock(nodeId);
@@ -106,6 +111,12 @@ public final class SkillTreeUtil {
         player.setData(SoulmarkAttachments.SKILL_TREE.get(), data);
 
         return UnlockResult.SUCCESS;
+    }
+
+    public static @Nullable SkillTreePayment getPayment(SkillNode node) {
+        if (node.soulGate()) return SoulPointPayment.INSTANCE;
+        SkillTree tree = SkillTreeRegistries.TREE_REGISTRY.getValue(node.treeId());
+        return tree != null ? tree.defaultPayment() : null;
     }
 
     /**
@@ -141,6 +152,22 @@ public final class SkillTreeUtil {
                 HiddenConditionRegistry.Evaluator evaluator = HiddenConditionRegistry.get(condition.detail());
                 yield evaluator != null && evaluator.test(player, condition.detail());
             }
+        };
+    }
+
+    /**
+     * Returns whether a node is revealed from synchronized skill-tree state.
+     * Custom conditions require server-side player state, so remain hidden in query-only contexts.
+     */
+    public static boolean isRevealed(ISkillTreeQuery query, SkillNode node) {
+        HiddenCondition condition = node.hiddenCondition();
+        if (condition == null) return true;
+
+        return switch (condition.type()) {
+            case NODE_UNLOCKED -> condition.detail() != null
+                    && query.isUnlocked(Identifier.parse(condition.detail()));
+            case MOD_LOADED -> condition.detail() != null && ModList.get().isLoaded(condition.detail());
+            case CUSTOM -> false;
         };
     }
 
@@ -201,13 +228,24 @@ public final class SkillTreeUtil {
     }
 
     /**
-     * Computes the visibility state of a node from the given tree data.
-     * Does not check hidden conditions — use the Player overload for full checks.
+     * Computes the visibility state of a node from any tree-query source (server data or
+     * client-side cache). Shared by both server authorization checks and client rendering
+     * for built-in hidden conditions. Custom conditions require the Player overload.
+     * DISCOVERY nodes are always INVISIBLE (never show in skill tree UI).
      */
-    public static NodeVisibility getVisibility(SkillTreeData data, Identifier nodeId) {
-        if (data.isUnlocked(nodeId)) return NodeVisibility.READABLE;
+    public static NodeVisibility getVisibility(ISkillTreeQuery query, Identifier nodeId) {
+        SkillNode node = SkillTreeRegistries.NODE_REGISTRY.getValue(nodeId);
+        if (node == null || !isRevealed(query, node)) return NodeVisibility.INVISIBLE;
+        return computeVisibility(nodeId, query::isUnlocked);
+    }
 
-        int distance = getDistanceToUnlocked(data, nodeId);
+    private static NodeVisibility computeVisibility(Identifier nodeId, Predicate<Identifier> isUnlockedCheck) {
+        SkillNode node = SkillTreeRegistries.NODE_REGISTRY.getValue(nodeId);
+        if (node == null) return NodeVisibility.INVISIBLE;
+        if (node.nodeType() == NodeType.DISCOVERY) return NodeVisibility.INVISIBLE;
+        if (isUnlockedCheck.test(nodeId)) return NodeVisibility.READABLE;
+
+        int distance = getDistanceToUnlocked(nodeId, isUnlockedCheck);
         return switch (distance) {
             case 1 -> NodeVisibility.UNLOCKABLE;
             case 2 -> NodeVisibility.SCRAMBLED;
@@ -221,29 +259,29 @@ public final class SkillTreeUtil {
      * For multi-parent nodes, returns the minimum distance across all parent paths.
      * Returns Integer.MAX_VALUE if no unlocked ancestor is found.
      */
-    private static int getDistanceToUnlocked(SkillTreeData data, Identifier nodeId) {
+    private static int getDistanceToUnlocked(Identifier nodeId, Predicate<Identifier> isUnlockedCheck) {
         SkillNode node = SkillTreeRegistries.NODE_REGISTRY.getValue(nodeId);
         if (node == null) return Integer.MAX_VALUE;
 
         if (node.parentIds().isEmpty()) {
             // Root node — distance is 0 if unlocked, MAX otherwise
-            return data.isUnlocked(nodeId) ? 0 : Integer.MAX_VALUE;
+            return isUnlockedCheck.test(nodeId) ? 0 : Integer.MAX_VALUE;
         }
 
         int minDistance = Integer.MAX_VALUE;
         for (Identifier parentId : node.parentIds()) {
-            int dist = getDistanceToUnlockedSingle(data, parentId, 1);
+            int dist = getDistanceToUnlockedSingle(parentId, 1, isUnlockedCheck);
             minDistance = Math.min(minDistance, dist);
         }
         return minDistance;
     }
 
-    private static int getDistanceToUnlockedSingle(SkillTreeData data, Identifier nodeId, int startDistance) {
+    private static int getDistanceToUnlockedSingle(Identifier nodeId, int startDistance, Predicate<Identifier> isUnlockedCheck) {
         int distance = startDistance;
         Identifier current = nodeId;
 
         while (current != null) {
-            if (data.isUnlocked(current)) return distance;
+            if (isUnlockedCheck.test(current)) return distance;
             SkillNode currentNode = SkillTreeRegistries.NODE_REGISTRY.getValue(current);
             if (currentNode == null) break;
             current = currentNode.parentId();
@@ -260,6 +298,29 @@ public final class SkillTreeUtil {
      */
     public static boolean hasNode(Player player, Identifier nodeId) {
         return getTreeData(player).isUnlocked(nodeId);
+    }
+
+    // ── Tree discovery ───────────────────────────────────────────────────────
+
+    /**
+     * Discovers a tree for the player, making its tab visible in the skill tree screen.
+     * Call this when the player first gains access to a job (e.g. first tome creation).
+     * Returns true if the tree was newly discovered.
+     */
+    public static boolean discoverTree(Player player, Identifier treeId) {
+        SkillTreeData data = getTreeData(player);
+        boolean newlyDiscovered = data.discoverTree(treeId);
+        if (newlyDiscovered) {
+            player.setData(SoulmarkAttachments.SKILL_TREE.get(), data);
+        }
+        return newlyDiscovered;
+    }
+
+    /**
+     * Returns true if the player has discovered the given tree.
+     */
+    public static boolean isTreeDiscovered(Player player, Identifier treeId) {
+        return getTreeData(player).isTreeDiscovered(treeId);
     }
 
     /**
@@ -304,14 +365,7 @@ public final class SkillTreeUtil {
         return getUnlockedNodesFiltered(player, treeId, node -> node.nodeType() == type);
     }
 
-    /**
-     * Returns all unlocked node IDs that have a specific tag within a given tree.
-     */
-    public static List<Identifier> getUnlockedNodesByTag(Player player, Identifier treeId, String tag) {
-        return getUnlockedNodesFiltered(player, treeId, node -> node.tags().contains(tag));
-    }
-
-    private static List<Identifier> getUnlockedNodesFiltered(Player player, Identifier treeId, java.util.function.Predicate<SkillNode> predicate) {
+    private static List<Identifier> getUnlockedNodesFiltered(Player player, Identifier treeId, Predicate<SkillNode> predicate) {
         SkillTreeData data = getTreeData(player);
         List<Identifier> result = new ArrayList<>();
         for (Map.Entry<ResourceKey<SkillNode>, SkillNode> entry : SkillTreeRegistries.NODE_REGISTRY.entrySet()) {

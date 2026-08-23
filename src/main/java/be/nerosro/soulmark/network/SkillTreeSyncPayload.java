@@ -12,11 +12,12 @@ import java.util.Set;
 
 /**
  * Server-to-client payload that syncs the player's skill tree state.
- * Sends the set of unlocked node IDs and available skill points.
+ * Sends the set of unlocked node IDs, available Soul Points, and discovered trees.
  */
 public record SkillTreeSyncPayload(
         Set<Identifier> unlockedNodes,
-        int availablePoints
+        int availableSoulPoints,
+        Set<Identifier> discoveredTrees
 ) implements CustomPacketPayload {
 
     public static final CustomPacketPayload.Type<SkillTreeSyncPayload> TYPE =
@@ -27,7 +28,9 @@ public record SkillTreeSyncPayload(
                     Identifier.STREAM_CODEC.apply(ByteBufCodecs.collection(HashSet::new)),
                     SkillTreeSyncPayload::unlockedNodes,
                     ByteBufCodecs.VAR_INT,
-                    SkillTreeSyncPayload::availablePoints,
+                    SkillTreeSyncPayload::availableSoulPoints,
+                    Identifier.STREAM_CODEC.apply(ByteBufCodecs.collection(HashSet::new)),
+                    SkillTreeSyncPayload::discoveredTrees,
                     SkillTreeSyncPayload::new
             );
 

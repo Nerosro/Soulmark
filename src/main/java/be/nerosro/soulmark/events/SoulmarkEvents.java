@@ -7,12 +7,15 @@ import be.nerosro.soulmark.capability.SoulmarkAttachments;
 import be.nerosro.soulmark.mana.ManaData;
 import be.nerosro.soulmark.mana.ManaUtil;
 import be.nerosro.soulmark.network.SoulmarkNetwork;
+import be.nerosro.soulmark.soulpoint.SoulPointUtil;
+import be.nerosro.soulmark.soulpoint.SoulPointWorldData;
 import be.nerosro.soulmark.skilltree.SkillTreeUtil;
 import be.nerosro.soulmark.traits.TraitData;
 import be.nerosro.soulmark.traits.TraitUtil;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 /**
@@ -20,6 +23,11 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
  * Handles initialization, ticking, and lifecycle sync.
  */
 public class SoulmarkEvents {
+
+    @SubscribeEvent
+    public void onServerStarted(ServerStartedEvent event) {
+        SoulPointWorldData.get(event.getServer().overworld());
+    }
 
     // ── First-spawn initialization ───────────────────────────────────────────
 
@@ -53,9 +61,12 @@ public class SoulmarkEvents {
 
         // Skill Tree — no initialization needed; empty state is valid
 
+        SoulPointUtil.initialize(player);
+
         // Sync to client
         SoulmarkNetwork.syncMana(player);
         SoulmarkNetwork.syncSkillTree(player);
+        SoulmarkNetwork.syncAttunement(player);
     }
 
     // ── Per-tick updates ─────────────────────────────────────────────────────
@@ -91,11 +102,13 @@ public class SoulmarkEvents {
 
         // Re-set attachments to trigger client sync
         player.setData(SoulmarkAttachments.MANA.get(), mana);
+        player.setData(SoulmarkAttachments.SOUL_POINTS.get(), SoulPointUtil.getData(player));
         player.setData(SoulmarkAttachments.SKILL_TREE.get(), SkillTreeUtil.getTreeData(player));
 
         // Sync to client after respawn
         SoulmarkNetwork.syncMana(player);
         SoulmarkNetwork.syncSkillTree(player);
+        SoulmarkNetwork.syncAttunement(player);
     }
 }
 

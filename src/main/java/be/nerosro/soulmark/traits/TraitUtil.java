@@ -67,5 +67,52 @@ public final class TraitUtil {
         Trait neutral = getNeutralTrait(player);
         return neutral != null && neutral.isOvermarked();
     }
+
+    // ── Discovery state ─────────────────────────────────────────────────────
+
+    private static final String REVEALED_KEY = "soulmark_traits_revealed";
+    private static final String SCARS_REVEALED_KEY = "elemancy_scars_revealed";
+
+    /**
+     * Returns true if the player's traits have been revealed (e.g. via the Mirror).
+     */
+    public static boolean isTraitsRevealed(Player player) {
+        return player.getPersistentData().getBoolean(REVEALED_KEY).orElse(false);
+    }
+
+    /**
+     * Marks the player's traits as revealed. Call this after the Mirror reveal moment.
+     */
+    public static void revealTraits(Player player) {
+        player.getPersistentData().putBoolean(REVEALED_KEY, true);
+    }
+
+    /**
+     * Resets the traits discovery state. Dev/testing use only.
+     */
+    public static void resetTraitsReveal(Player player) {
+        player.getPersistentData().remove(REVEALED_KEY);
+    }
+
+    /**
+     * Returns true if the player's scars reference has been revealed (Tome + Mirror).
+     */
+    public static boolean isScarsRevealed(Player player) {
+        return player.getPersistentData().getBoolean(SCARS_REVEALED_KEY).orElse(false);
+    }
+
+    /**
+     * Marks the player's scars reference as revealed. Call when using Tome on Mirror.
+     */
+    public static void revealScars(Player player) {
+        player.getPersistentData().putBoolean(SCARS_REVEALED_KEY, true);
+    }
+
+    /**
+     * Resets the scars discovery state. Dev/testing use only.
+     */
+    public static void resetScarsReveal(Player player) {
+        player.getPersistentData().remove(SCARS_REVEALED_KEY);
+    }
 }
 

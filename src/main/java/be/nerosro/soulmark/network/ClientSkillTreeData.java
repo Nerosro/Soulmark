@@ -1,5 +1,8 @@
 package be.nerosro.soulmark.network;
 
+import be.nerosro.soulmark.skilltree.NodeType;
+import be.nerosro.soulmark.skilltree.SkillNode;
+import be.nerosro.soulmark.skilltree.SkillTreeRegistries;
 import net.minecraft.resources.Identifier;
 
 import java.util.Collections;
@@ -13,7 +16,8 @@ import java.util.Set;
 public final class ClientSkillTreeData {
 
     private static final Set<Identifier> unlockedNodes = new HashSet<>();
-    private static int availablePoints = 0;
+    private static final Set<Identifier> discoveredTrees = new HashSet<>();
+    private static int availableSoulPoints = 0;
     private static Runnable changeListener = null;
 
     private ClientSkillTreeData() {}
@@ -33,22 +37,35 @@ public final class ClientSkillTreeData {
     public static void update(SkillTreeSyncPayload payload) {
         unlockedNodes.clear();
         unlockedNodes.addAll(payload.unlockedNodes());
-        availablePoints = payload.availablePoints();
+        discoveredTrees.clear();
+        discoveredTrees.addAll(payload.discoveredTrees());
+        availableSoulPoints = payload.availableSoulPoints();
         if (changeListener != null) {
             changeListener.run();
         }
     }
 
     public static boolean isUnlocked(Identifier nodeId) {
-        return unlockedNodes.contains(nodeId);
+        if (unlockedNodes.contains(nodeId)) return true;
+        // Root nodes are implicitly unlocked (except DISCOVERY nodes)
+        SkillNode node = SkillTreeRegistries.NODE_REGISTRY.getValue(nodeId);
+        return node != null && node.isRoot() && node.nodeType() != NodeType.DISCOVERY;
     }
 
     public static Set<Identifier> getUnlockedNodes() {
         return Collections.unmodifiableSet(unlockedNodes);
     }
 
-    public static int getAvailablePoints() {
-        return availablePoints;
+    public static boolean isTreeDiscovered(Identifier treeId) {
+        return discoveredTrees.contains(treeId);
+    }
+
+    public static Set<Identifier> getDiscoveredTrees() {
+        return Collections.unmodifiableSet(discoveredTrees);
+    }
+
+    public static int getAvailableSoulPoints() {
+        return availableSoulPoints;
     }
 }
 

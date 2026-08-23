@@ -9,11 +9,20 @@ import net.minecraft.resources.Identifier;
 
 /**
  * Server-to-client payload that syncs the player's mana state for HUD display.
- * Only contains what the client needs to render — regen logic stays server-side.
+ * Also carries discovery flags (affinity and traits revealed) and the affinity identifier.
+ * Includes separate trinket bonuses for accurate stat breakdown display in Tome.
  */
 public record ManaSyncPayload(
         float currentMana,
-        float maxPool
+        float maxPool,
+        float manaBase,
+        float poolTrinketBonus,
+        float regenTrinketBonus,
+        boolean affinityRevealed,
+        boolean traitsRevealed,
+        boolean scarsRevealed,
+        boolean hasExperiencedManaCollapse,
+        Identifier affinityId
 ) implements CustomPacketPayload {
 
     public static final CustomPacketPayload.Type<ManaSyncPayload> TYPE =
@@ -23,6 +32,14 @@ public record ManaSyncPayload(
             StreamCodec.composite(
                     ByteBufCodecs.FLOAT, ManaSyncPayload::currentMana,
                     ByteBufCodecs.FLOAT, ManaSyncPayload::maxPool,
+                    ByteBufCodecs.FLOAT, ManaSyncPayload::manaBase,
+                    ByteBufCodecs.FLOAT, ManaSyncPayload::poolTrinketBonus,
+                    ByteBufCodecs.FLOAT, ManaSyncPayload::regenTrinketBonus,
+                    ByteBufCodecs.BOOL, ManaSyncPayload::affinityRevealed,
+                    ByteBufCodecs.BOOL, ManaSyncPayload::traitsRevealed,
+                    ByteBufCodecs.BOOL, ManaSyncPayload::scarsRevealed,
+                    ByteBufCodecs.BOOL, ManaSyncPayload::hasExperiencedManaCollapse,
+                    Identifier.STREAM_CODEC, ManaSyncPayload::affinityId,
                     ManaSyncPayload::new
             );
 

@@ -10,11 +10,12 @@ import java.util.*;
 /**
  * Stores the player's skill tree progress.
  * Tracks which nodes are unlocked, per-tree spend totals, and active exclusion groups.
- * Point spending is handled by SkillPointData.
+ * Currency spending is handled by each tree's payment implementation.
  */
-public class SkillTreeData implements ValueIOSerializable {
+public class SkillTreeData implements ValueIOSerializable, ISkillTreeQuery {
 
     private final Set<Identifier> unlockedNodes = new HashSet<>();
+    private final Set<Identifier> discoveredTrees = new HashSet<>();        // trees the player has access to
     private final Map<Identifier, Integer> spentPerTree = new HashMap<>();  // treeId -> total spent in that tree
     private final Set<String> activeExclusions = new HashSet<>();           // exclusion groups that have been committed
 
@@ -31,16 +32,45 @@ public class SkillTreeData implements ValueIOSerializable {
 
     /**
      * Returns true if the given node is unlocked.
+     * Root nodes are implicitly always unlocked (they are entry points to a tree).
+     * Exception: DISCOVERY nodes never auto-unlock, even if roots.
      */
     public boolean isUnlocked(Identifier nodeId) {
-        return unlockedNodes.contains(nodeId);
+        if (unlockedNodes.contains(nodeId)) return true;
+        SkillNode node = SkillTreeRegistries.NODE_REGISTRY.getValue(nodeId);
+        return node != null && node.isRoot() && node.nodeType() != NodeType.DISCOVERY;
     }
 
     /**
-     * Returns an unmodifiable view of all unlocked node IDs.
+     * Returns an unmodifiable view of all explicitly unlocked node IDs.
+     * Note: root nodes are implicitly unlocked and may not appear in this set.
      */
     public Set<Identifier> getUnlockedNodes() {
         return Collections.unmodifiableSet(unlockedNodes);
+    }
+
+    // ── Tree discovery ───────────────────────────────────────────────────────
+
+    /**
+     * Marks a tree as discovered. The player can now see its tab in the skill tree screen.
+     * Returns true if the tree was newly discovered.
+     */
+    public boolean discoverTree(Identifier treeId) {
+        return discoveredTrees.add(treeId);
+    }
+
+    /**
+     * Returns true if the given tree has been discovered by the player.
+     */
+    public boolean isTreeDiscovered(Identifier treeId) {
+        return discoveredTrees.contains(treeId);
+    }
+
+    /**
+     * Returns an unmodifiable view of all discovered tree IDs.
+     */
+    public Set<Identifier> getDiscoveredTrees() {
+        return Collections.unmodifiableSet(discoveredTrees);
     }
 
     // ── Per-tree spend tracking ──────────────────────────────────────────────
@@ -115,6 +145,14 @@ public class SkillTreeData implements ValueIOSerializable {
             output.putString("exclusion_" + i, group);
             i++;
         }
+
+        // Discovered trees
+        output.putInt("discoveredTreeCount", discoveredTrees.size());
+        i = 0;
+        for (Identifier treeId : discoveredTrees) {
+            output.putString("discoveredTree_" + i, treeId.toString());
+            i++;
+        }
     }
 
     @Override
@@ -142,6 +180,13 @@ public class SkillTreeData implements ValueIOSerializable {
         activeExclusions.clear();
         for (int i = 0; i < exclusionCount; i++) {
             input.getString("exclusion_" + i).ifPresent(activeExclusions::add);
+        }
+
+        // Discovered trees
+        int discoveredCount = input.getIntOr("discoveredTreeCount", 0);
+        discoveredTrees.clear();
+        for (int i = 0; i < discoveredCount; i++) {
+            input.getString("discoveredTree_" + i).map(Identifier::parse).ifPresent(discoveredTrees::add);
         }
     }
 }

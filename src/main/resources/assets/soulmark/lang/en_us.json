@@ -13,5 +13,8 @@
   "soulmark.configuration.items": "Item List",
   "soulmark.configuration.logDirtBlock": "Log Dirt Block",
   "soulmark.configuration.magicNumberIntroduction": "Magic Number Text",
-  "soulmark.configuration.magicNumber": "Magic Number"
+  "soulmark.configuration.magicNumber": "Magic Number",
+
+  "curios.identifier.amulet": "Amulet",
+  "curios.identifier.satchel": "Satchel"
 }

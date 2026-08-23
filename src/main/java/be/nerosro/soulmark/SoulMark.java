@@ -3,6 +3,8 @@ package be.nerosro.soulmark;
 import com.mojang.logging.LogUtils;
 import be.nerosro.soulmark.capability.SoulmarkAttachments;
 import be.nerosro.soulmark.dev.DevEvents;
+import be.nerosro.soulmark.element.ElementRegistry;
+import be.nerosro.soulmark.element.SoulmarkElements;
 import be.nerosro.soulmark.events.SoulmarkEvents;
 import be.nerosro.soulmark.network.SoulmarkNetwork;
 import be.nerosro.soulmark.skilltree.SkillTreeRegistries;
@@ -25,6 +27,9 @@ public class SoulMark {
         // Register custom registries (traits)
         modEventBus.addListener(this::registerRegistries);
 
+        // Register elements
+        SoulmarkElements.register(modEventBus);
+
         // Register Soulmark's own traits
         SoulmarkTraits.register(modEventBus);
 
@@ -43,6 +48,7 @@ public class SoulMark {
     }
 
     private void registerRegistries(NewRegistryEvent event) {
+        event.register(ElementRegistry.ELEMENT_REGISTRY);
         event.register(TraitRegistries.TRAIT_REGISTRY);
         event.register(SkillTreeRegistries.TREE_REGISTRY);
         event.register(SkillTreeRegistries.NODE_REGISTRY);

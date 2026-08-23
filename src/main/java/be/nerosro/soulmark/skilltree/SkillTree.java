@@ -10,18 +10,13 @@ package be.nerosro.soulmark.skilltree;
  *                    (e.g. "elemancy", "knights"). Used for per-tree spend tracking
  *                    and cross-mod queries.
  * @param direction   Layout direction for rendering (TOP_DOWN or LEFT_RIGHT)
+ * @param defaultPayment Payment implementation used by ordinary nodes in this tree
  */
 public record SkillTree(
         String name,
         String description,
         String jobTag,
-        LayoutDirection direction
-) {
-    /**
-     * Constructor without direction (defaults to TOP_DOWN).
-     */
-    public SkillTree(String name, String description, String jobTag) {
-        this(name, description, jobTag, LayoutDirection.TOP_DOWN);
-    }
-}
+        LayoutDirection direction,
+        SkillTreePayment defaultPayment
+) {}
 

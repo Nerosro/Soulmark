@@ -38,9 +38,13 @@ public class RadialMenuOverlay implements GuiLayer {
     // ── Colors ──────────────────────────────────────────────────────────────
     private static final int RING_BG_COLOR = 0xAA000000;
     private static final int CENTER_DOT_COLOR = 0xFF666666;
+    private static final int CENTER_DOT_BORDER = 0xFF888888;
     private static final int SELECTED_BORDER = 0xFFFFDD44;
     private static final int LABEL_COLOR = 0xFFFFFFFF;
     private static final int DESC_COLOR = 0xFFAAAAAA;
+    private static final int LINE_COLOR_NORMAL = 0xFF333344;
+    private static final int LINE_COLOR_HOVERED = 0xFF888888;
+    private static final int DETAIL_BAR_BG = 0xC0000000;
 
     // ── Singleton state ─────────────────────────────────────────────────────
     private static boolean active;
@@ -207,10 +211,10 @@ public class RadialMenuOverlay implements GuiLayer {
     private void drawCenter(GuiGraphicsExtractor graphics, int cx, int cy) {
         int size = 4;
         graphics.fillGradient(cx - size, cy - size, cx + size, cy + size, CENTER_DOT_COLOR, CENTER_DOT_COLOR);
-        graphics.fillGradient(cx - size, cy - size, cx + size, cy - size + 1, 0xFF888888, 0xFF888888);
-        graphics.fillGradient(cx - size, cy + size - 1, cx + size, cy + size, 0xFF888888, 0xFF888888);
-        graphics.fillGradient(cx - size, cy - size, cx - size + 1, cy + size, 0xFF888888, 0xFF888888);
-        graphics.fillGradient(cx + size - 1, cy - size, cx + size, cy + size, 0xFF888888, 0xFF888888);
+        graphics.fillGradient(cx - size, cy - size, cx + size, cy - size + 1, CENTER_DOT_BORDER, CENTER_DOT_BORDER);
+        graphics.fillGradient(cx - size, cy + size - 1, cx + size, cy + size, CENTER_DOT_BORDER, CENTER_DOT_BORDER);
+        graphics.fillGradient(cx - size, cy - size, cx - size + 1, cy + size, CENTER_DOT_BORDER, CENTER_DOT_BORDER);
+        graphics.fillGradient(cx + size - 1, cy - size, cx + size, cy + size, CENTER_DOT_BORDER, CENTER_DOT_BORDER);
     }
 
     private void drawConnectionLines(GuiGraphicsExtractor graphics, int cx, int cy) {
@@ -219,7 +223,7 @@ public class RadialMenuOverlay implements GuiLayer {
             int ex = cx + (int) (Math.cos(angle) * RING_RADIUS);
             int ey = cy + (int) (Math.sin(angle) * RING_RADIUS);
 
-            int lineColor = (i == hoveredIndex) ? 0xFF888888 : 0xFF333344;
+            int lineColor = (i == hoveredIndex) ? LINE_COLOR_HOVERED : LINE_COLOR_NORMAL;
             drawLine(graphics, cx, cy, ex, ey, lineColor);
         }
     }
@@ -261,7 +265,7 @@ public class RadialMenuOverlay implements GuiLayer {
             graphics.blit(RenderPipelines.GUI_TEXTURED, entry.icon(),
                     ex - halfIcon, ey - halfIcon, 0, 0, iconSize, iconSize, iconSize, iconSize);
         } else {
-            int iconColor = isHovered ? 0xFFFFFFFF : UiRenderUtil.dimColor(entry.color(), 0.9f);
+            int iconColor = isHovered ? LABEL_COLOR : UiRenderUtil.dimColor(entry.color(), 0.9f);
             graphics.centeredText(mc.font, Component.literal(entry.iconChar()), ex, ey - 4, iconColor);
         }
 
@@ -281,7 +285,7 @@ public class RadialMenuOverlay implements GuiLayer {
         int barRight = cx + textWidth / 2 + 8;
         int barTop = y - 4;
         int barBottom = y + 12;
-        graphics.fillGradient(barLeft, barTop, barRight, barBottom, 0xC0000000, 0xC0000000);
+        graphics.fillGradient(barLeft, barTop, barRight, barBottom, DETAIL_BAR_BG, DETAIL_BAR_BG);
 
         // Border in entry color
         int borderColor = UiRenderUtil.dimColor(entry.color(), 0.7f);

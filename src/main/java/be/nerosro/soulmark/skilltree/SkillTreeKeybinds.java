@@ -9,7 +9,9 @@ import net.neoforged.neoforge.client.settings.KeyConflictContext;
 /**
  * Keybind registration for the skill tree.
  */
-public class SkillTreeKeybinds {
+public final class SkillTreeKeybinds {
+
+    private SkillTreeKeybinds() {}
 
     private static final KeyMapping.Category SOULMARK_CATEGORY =
             new KeyMapping.Category(Identifier.fromNamespaceAndPath(SoulMark.MOD_ID, "keys"));

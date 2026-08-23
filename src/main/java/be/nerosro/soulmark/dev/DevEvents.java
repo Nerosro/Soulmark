@@ -1,17 +1,22 @@
 package be.nerosro.soulmark.dev;
 
-import be.nerosro.soulmark.affinity.Affinity;
 import be.nerosro.soulmark.affinity.AffinityData;
 import be.nerosro.soulmark.affinity.AffinityUtil;
 import be.nerosro.soulmark.capability.SoulmarkAttachments;
+import be.nerosro.soulmark.element.Element;
+import be.nerosro.soulmark.element.ElementRegistry;
 import be.nerosro.soulmark.mana.ManaData;
 import be.nerosro.soulmark.mana.ManaUtil;
+import be.nerosro.soulmark.network.SoulmarkNetwork;
+import be.nerosro.soulmark.soulpoint.SoulPointUtil;
 import be.nerosro.soulmark.traits.Trait;
 import be.nerosro.soulmark.traits.TraitData;
 import be.nerosro.soulmark.traits.TraitUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.Items;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
@@ -21,6 +26,7 @@ import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
  * - Paper: print all player stats to chat.
  * - Feather: reroll all origin stats.
  * - Ink Sac: reroll traits only.
+ * - Nether Star: grant one Soul Point.
  */
 public class DevEvents {
 
@@ -34,6 +40,12 @@ public class DevEvents {
             rerollStats(player);
         } else if (event.getItemStack().is(Items.INK_SAC)) {
             rerollTraits(player);
+                } else if (event.getHand() == InteractionHand.MAIN_HAND
+                                && event.getItemStack().is(Items.NETHER_STAR)
+                                && !player.isShiftKeyDown()) {
+                        SoulPointUtil.award(player, 1);
+                        SoulmarkNetwork.syncSkillTree(player);
+                        player.sendSystemMessage(Component.literal("+1 Soul Point").withStyle(ChatFormatting.GREEN));
         }
     }
 
@@ -44,10 +56,15 @@ public class DevEvents {
                 .withStyle(ChatFormatting.GOLD));
 
         // Affinity
-        Affinity affinity = AffinityUtil.getAffinity(player);
+        Element affinity = AffinityUtil.getAffinity(player);
+        String affinityName = "None";
+        if (affinity != null) {
+            Identifier key = ElementRegistry.ELEMENT_REGISTRY.getKey(affinity);
+            affinityName = key != null ? key.getPath() : "Unknown";
+        }
         player.sendSystemMessage(Component.literal("Affinity: ")
                 .withStyle(ChatFormatting.GRAY)
-                .append(Component.literal(affinity != null ? affinity.displayName() : "None")
+                .append(Component.literal(affinityName)
                         .withStyle(ChatFormatting.LIGHT_PURPLE)));
 
         // Mana
@@ -125,9 +142,10 @@ public class DevEvents {
         AffinityUtil.rollOrigin(affinityData, player.getRandom());
         player.setData(SoulmarkAttachments.AFFINITY.get(), affinityData);
 
+        Identifier newAffinityKey = ElementRegistry.ELEMENT_REGISTRY.getKey(affinityData.getAffinity());
         player.sendSystemMessage(Component.literal("  New Affinity: ")
                 .withStyle(ChatFormatting.GRAY)
-                .append(Component.literal(affinityData.getAffinity().displayName())
+                .append(Component.literal(newAffinityKey != null ? newAffinityKey.getPath() : "Unknown")
                         .withStyle(ChatFormatting.LIGHT_PURPLE)));
 
         // Traits

@@ -11,6 +11,12 @@ public enum NodeType {
     ABILITY("Ability"),
     /** Utility skills (square indicator) */
     UTILITY("Utility"),
+    /** Recipe unlock nodes (scroll indicator). Learning grants access to a crafting recipe. */
+    RECIPE("Recipe"),
+    /** Ritual nodes (circle indicator). Triggers a transformative event or ceremony. */
+    RITUAL("Ritual"),
+    /** Discovery nodes (hidden). Used for gating Tome entries and tracking world discoveries. Never visible in skill tree. */
+    DISCOVERY("Discovery"),
     /** Specialization commitment nodes (diamond indicator). Typically triggers exclusion groups. */
     SPECIALIZATION("Specialization"),
     /** End-of-branch capstone nodes (star indicator). Powerful, one per specialization. */

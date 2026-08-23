@@ -2,8 +2,9 @@ package be.nerosro.soulmark.capability;
 
 import be.nerosro.soulmark.SoulMark;
 import be.nerosro.soulmark.affinity.AffinityData;
+import be.nerosro.soulmark.attunement.AttunementData;
 import be.nerosro.soulmark.mana.ManaData;
-import be.nerosro.soulmark.skilltree.SkillPointData;
+import be.nerosro.soulmark.soulpoint.SoulPointData;
 import be.nerosro.soulmark.skilltree.SkillTreeData;
 import be.nerosro.soulmark.traits.TraitData;
 import net.neoforged.bus.api.IEventBus;
@@ -38,6 +39,13 @@ public class SoulmarkAttachments {
                             .build()
             );
 
+    public static final Supplier<AttachmentType<AttunementData>> ATTUNEMENT =
+            ATTACHMENTS.register("attunement", () ->
+                    AttachmentType.serializable(AttunementData::new)
+                            .copyOnDeath()
+                            .build()
+            );
+
     public static final Supplier<AttachmentType<SkillTreeData>> SKILL_TREE =
             ATTACHMENTS.register("skill_tree", () ->
                     AttachmentType.serializable(SkillTreeData::new)
@@ -45,9 +53,9 @@ public class SoulmarkAttachments {
                             .build()
             );
 
-    public static final Supplier<AttachmentType<SkillPointData>> SKILL_POINTS =
-            ATTACHMENTS.register("skill_points", () ->
-                    AttachmentType.serializable(SkillPointData::new)
+    public static final Supplier<AttachmentType<SoulPointData>> SOUL_POINTS =
+            ATTACHMENTS.register("soul_points", () ->
+                    AttachmentType.serializable(SoulPointData::new)
                             .copyOnDeath()
                             .build()
             );

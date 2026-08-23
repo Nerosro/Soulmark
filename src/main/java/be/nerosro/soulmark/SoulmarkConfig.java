@@ -53,9 +53,11 @@ public class SoulmarkConfig {
             .comment("Relative weight for Exotic traits in the roll pool")
             .defineInRange("traits.weights.exotic", 1, 1, 200);
 
-    // ── Skill Tree ───────────────────────────────────────────────────────────
-    // Point economy is managed through milestone payouts from job mods.
-    // No global cap — budget is controlled by earned points, not a ceiling.
+    // ── Soul Points ──────────────────────────────────────────────────────────
+
+    public static final ModConfigSpec.IntValue SOUL_POINT_STARTING_BALANCE = BUILDER
+            .comment("Soul Points assigned to each player in a newly created world")
+            .defineInRange("soulPoints.startingBalance", 1, 0, 100);
 
     public static final ModConfigSpec SPEC = BUILDER.build();
 }
