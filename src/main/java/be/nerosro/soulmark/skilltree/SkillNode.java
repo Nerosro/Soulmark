@@ -19,8 +19,7 @@ import java.util.function.Supplier;
  * @param parentMode      Whether ALL or ANY parent must be unlocked (default ALL)
  * @param nodeType        The category of this node (determines icon frame shape)
  * @param cost            How many points this node costs to unlock (default 1)
- * @param gridX           Horizontal grid position within the tree layout (0 = center column)
- * @param gridY           Vertical grid position within the tree layout (0 = top row)
+ * @param position        Semantic placement within the tree layout
  * @param element         The element this node belongs to (NONE = unattuned)
  * @param prerequisites   Extra node IDs that must be unlocked before this node (in addition to parentIds)
  * @param exclusionGroup  If non-null, unlocking this node locks out all other nodes in the same group
@@ -36,8 +35,7 @@ public record SkillNode(
         ParentMode parentMode,
         NodeType nodeType,
         int cost,
-        int gridX,
-        int gridY,
+        LayoutPosition position,
         Element element,
         List<Identifier> prerequisites,
         @Nullable String exclusionGroup,
@@ -45,6 +43,16 @@ public record SkillNode(
         @Nullable Identifier icon,
         boolean soulGate
 ) {
+    /** Returns this node's cross-axis sibling lane. */
+    public int lane() {
+        return position.lane();
+    }
+
+    /** Returns this node's progression distance from the tree root. */
+    public int depth() {
+        return position.depth();
+    }
+
     /**
      * Returns true if this is a root node (no parents).
      */
@@ -72,8 +80,7 @@ public record SkillNode(
         private final List<Identifier> parentIds = new ArrayList<>();
         private ParentMode parentMode = ParentMode.ALL;
         private int cost = 1;
-        private int gridX = 0;
-        private int gridY = 0;
+        private LayoutPosition position = new LayoutPosition(0, 0);
         private List<Identifier> prerequisites = List.of();
         private @Nullable String exclusionGroup;
         private @Nullable HiddenCondition hiddenCondition;
@@ -108,9 +115,8 @@ public record SkillNode(
             return this;
         }
 
-        public Builder gridPosition(int x, int y) {
-            this.gridX = x;
-            this.gridY = y;
+        public Builder position(int lane, int depth) {
+            this.position = new LayoutPosition(lane, depth);
             return this;
         }
 
@@ -144,7 +150,7 @@ public record SkillNode(
 
         public SkillNode build() {
             return new SkillNode(name, description, treeId, List.copyOf(parentIds), parentMode, nodeType,
-                    cost, gridX, gridY, element.get(), prerequisites, exclusionGroup, hiddenCondition, icon, soulGate);
+                    cost, position, element.get(), prerequisites, exclusionGroup, hiddenCondition, icon, soulGate);
         }
     }
 }

@@ -10,8 +10,11 @@ public final class SkillTreeScreenConstants {
 
         public static final int NODE_SIZE = 24;
         public static final int NODE_HALF = NODE_SIZE / 2;
-        public static final int GRID_SPACING_X = 90;
-        public static final int GRID_SPACING_Y = 70;
+        public static final int LABEL_OFFSET_Y = 6;
+        public static final int LABEL_NAMEPLATE_PADDING_X = 5;
+        public static final int LABEL_NAMEPLATE_PADDING_Y = 3;
+        public static final int LANE_SPACING = 30;
+        public static final int DEPTH_SPACING = 100;
         public static final int HEADER_HEIGHT = 30;
         public static final int TAB_HEIGHT = 20;
         public static final int TAB_WIDTH = 80;
@@ -42,7 +45,13 @@ public final class SkillTreeScreenConstants {
         public static final int LINE_UNLOCKED = 0xFFAAFFAA;
         public static final int LINE_LOCKED = 0xFF444466;
         public static final int TEXT_READABLE = 0xFFFFFFFF;
+        public static final int TEXT_UNLOCKED = 0xFFCCCC88;
+        public static final int TEXT_UNLOCKABLE = 0xFFFFFFFF;
         public static final int TEXT_SCRAMBLED = 0xFF888888;
+        public static final int LABEL_NAMEPLATE_FILL_TOP = 0xB81C1830;
+        public static final int LABEL_NAMEPLATE_FILL_BOTTOM = 0xB8101020;
+        public static final int LABEL_NAMEPLATE_BORDER_TOP = 0xFFB8B4C0;
+        public static final int LABEL_NAMEPLATE_BORDER_BOTTOM = 0xFF6F6B78;
         public static final int POINTS_LABEL = 0xFFAAFFAA;
         public static final int SOUL_POINT_LABEL = 0xFFFF5555;
         public static final int JOB_POINT_LABEL = 0xFFFFFF55;

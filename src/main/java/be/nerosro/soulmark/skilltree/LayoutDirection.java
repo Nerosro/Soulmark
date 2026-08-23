@@ -1,11 +1,11 @@
 package be.nerosro.soulmark.skilltree;
 
 /**
- * Controls how a skill tree's grid coordinates map to screen space.
+ * Controls how a skill tree's lane and depth coordinates map to screen space.
  */
 public enum LayoutDirection {
-    /** gridX = horizontal, gridY = vertical (root at top, children below). */
+    /** Lane spreads horizontally, depth progresses downward. */
     TOP_DOWN,
-    /** gridX = vertical, gridY = horizontal (root at left, children to the right). */
+    /** Lane spreads vertically, depth progresses rightward. */
     LEFT_RIGHT
 }

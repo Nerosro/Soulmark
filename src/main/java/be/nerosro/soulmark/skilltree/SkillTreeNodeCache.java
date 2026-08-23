@@ -40,15 +40,15 @@ public final class SkillTreeNodeCache {
             NodeVisibility visibility = SkillTreeUtil.getVisibility(ClientSkillTreeQuery.INSTANCE, nodeId);
             if (visibility == NodeVisibility.INVISIBLE) continue;
 
-            // Compute pixel position from grid coordinates, swapping axes for LEFT_RIGHT
+            // Map semantic lane/depth coordinates to screen axes for the tree direction.
             int pixelX;
             int pixelY;
             if (horizontal) {
-                pixelX = node.gridY() * SkillTreeScreenConstants.Layout.GRID_SPACING_X;
-                pixelY = node.gridX() * SkillTreeScreenConstants.Layout.GRID_SPACING_Y;
+                pixelX = node.depth() * SkillTreeScreenConstants.Layout.DEPTH_SPACING;
+                pixelY = node.lane() * SkillTreeScreenConstants.Layout.LANE_SPACING;
             } else {
-                pixelX = node.gridX() * SkillTreeScreenConstants.Layout.GRID_SPACING_X;
-                pixelY = node.gridY() * SkillTreeScreenConstants.Layout.GRID_SPACING_Y;
+                pixelX = node.lane() * SkillTreeScreenConstants.Layout.LANE_SPACING;
+                pixelY = node.depth() * SkillTreeScreenConstants.Layout.DEPTH_SPACING;
             }
 
             boolean excluded = isExcluded(nodeId);

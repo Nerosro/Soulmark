@@ -5,6 +5,8 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FontDescription;
+import net.minecraft.network.chat.Style;
 import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.Nullable;
 
@@ -15,6 +17,8 @@ public final class SkillTreeNodeRenderer {
 
     private static final Identifier SOUL_POINT_GATE_ICON =
             Identifier.fromNamespaceAndPath("soulmark", "textures/gui/skills/soul-gate.png");
+        private static final FontDescription SCRAMBLED_FONT =
+            new FontDescription.Resource(Identifier.withDefaultNamespace("alt"));
 
     private SkillTreeNodeRenderer() {}
 
@@ -77,7 +81,7 @@ public final class SkillTreeNodeRenderer {
                 drawNodeTypeIndicator(graphics, cx, cy, entry.node().nodeType(), entry.visibility());
             }
 
-            drawNodeLabel(graphics, font, cx, bottom + 2, entry);
+            drawNodeLabel(graphics, font, cx, bottom + SkillTreeScreenConstants.Layout.LABEL_OFFSET_Y, entry);
         }
 
         return hovered;
@@ -146,20 +150,45 @@ public final class SkillTreeNodeRenderer {
     }
 
     private static void drawNodeLabel(GuiGraphicsExtractor graphics, Font font, int cx, int y, SkillTreeNodeCache.NodeEntry entry) {
+        Component label;
+        int color;
         if (entry.visibility() == NodeVisibility.READABLE) {
-            graphics.centeredText(font, Component.literal(entry.node().name()),
-                    cx, y, SkillTreeScreenConstants.Colors.TEXT_READABLE);
+            label = Component.literal(entry.node().name());
+            color = SkillTreeScreenConstants.Colors.TEXT_UNLOCKED;
         } else if (entry.visibility() == NodeVisibility.UNLOCKABLE) {
-            // Show real name but in a dimmer/different color to indicate not yet unlocked
-            int color = entry.excluded() ? 0xFF994444 : 0xFFCCCC88;
-            graphics.centeredText(font, Component.literal(entry.node().name()),
-                    cx, y, color);
+            // Show available nodes in white; excluded nodes remain red.
+            label = Component.literal(entry.node().name());
+            color = entry.excluded() ? 0xFF994444 : SkillTreeScreenConstants.Colors.TEXT_UNLOCKABLE;
         } else if (entry.visibility() == NodeVisibility.SCRAMBLED) {
-            String scrambled = scrambleText(entry.node().name());
-            graphics.centeredText(font, Component.literal(scrambled),
-                    cx, y, SkillTreeScreenConstants.Colors.TEXT_SCRAMBLED);
+            label = scrambledLabel(entry.node().name());
+            color = SkillTreeScreenConstants.Colors.TEXT_SCRAMBLED;
+        } else {
+            return;
         }
-        // TEASED: no label shown
+
+        int paddingX = SkillTreeScreenConstants.Layout.LABEL_NAMEPLATE_PADDING_X;
+        int paddingY = SkillTreeScreenConstants.Layout.LABEL_NAMEPLATE_PADDING_Y;
+        int labelWidth = font.width(label);
+        int left = cx - labelWidth / 2 - paddingX;
+        int right = cx + (labelWidth + 1) / 2 + paddingX;
+        int top = y - paddingY;
+        int bottom = y + font.lineHeight + paddingY;
+        graphics.fillGradient(left, top, right, bottom,
+            SkillTreeScreenConstants.Colors.LABEL_NAMEPLATE_FILL_TOP,
+            SkillTreeScreenConstants.Colors.LABEL_NAMEPLATE_FILL_BOTTOM);
+        graphics.fillGradient(left, top, right, top + 1,
+            SkillTreeScreenConstants.Colors.LABEL_NAMEPLATE_BORDER_TOP,
+            SkillTreeScreenConstants.Colors.LABEL_NAMEPLATE_BORDER_TOP);
+        graphics.fillGradient(left, bottom - 1, right, bottom,
+            SkillTreeScreenConstants.Colors.LABEL_NAMEPLATE_BORDER_BOTTOM,
+            SkillTreeScreenConstants.Colors.LABEL_NAMEPLATE_BORDER_BOTTOM);
+        graphics.fillGradient(left, top + 1, left + 1, bottom - 1,
+            SkillTreeScreenConstants.Colors.LABEL_NAMEPLATE_BORDER_TOP,
+            SkillTreeScreenConstants.Colors.LABEL_NAMEPLATE_BORDER_BOTTOM);
+        graphics.fillGradient(right - 1, top + 1, right, bottom - 1,
+            SkillTreeScreenConstants.Colors.LABEL_NAMEPLATE_BORDER_TOP,
+            SkillTreeScreenConstants.Colors.LABEL_NAMEPLATE_BORDER_BOTTOM);
+        graphics.centeredText(font, label, cx, y, color);
     }
 
     static int getNodeTypeColor(NodeType type) {
@@ -187,5 +216,15 @@ public final class SkillTreeNodeRenderer {
             }
         }
         return new String(chars);
+    }
+
+    static Component scrambledLabel(String text) {
+        return Component.literal(scrambleText(text)).withStyle(Style.EMPTY.withFont(SCRAMBLED_FONT));
+    }
+
+    static Component scrambledTooltipLabel(String text) {
+        return Component.literal(scrambleText(text))
+                .withStyle(Style.EMPTY.withFont(SCRAMBLED_FONT))
+                .withStyle(net.minecraft.ChatFormatting.DARK_GRAY);
     }
 }

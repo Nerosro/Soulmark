@@ -61,7 +61,7 @@ public final class SkillTreeTooltipRenderer {
                         .append(Component.literal(node.nodeType().displayName()).withStyle(ChatFormatting.WHITE)));
             }
         } else if (visibility == NodeVisibility.SCRAMBLED) {
-            lines.add(Component.literal(SkillTreeNodeRenderer.scrambleText(node.name())).withStyle(ChatFormatting.DARK_GRAY));
+            lines.add(SkillTreeNodeRenderer.scrambledTooltipLabel(node.name()));
             lines.add(Component.literal("???").withStyle(ChatFormatting.DARK_GRAY));
         } else if (visibility == NodeVisibility.TEASED) {
             lines.add(Component.literal("???").withStyle(ChatFormatting.DARK_GRAY));
