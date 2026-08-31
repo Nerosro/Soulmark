@@ -41,6 +41,21 @@ public final class AffinityUtil {
         return data.isInitialized() ? data.getAffinity() : null;
     }
 
+    /**
+     * Returns true when the player has the given affinity.
+     */
+    public static boolean hasAffinity(Player player, Element element) {
+        return getAffinity(player) == element;
+    }
+
+    /**
+     * Returns true when the player's affinity opposes the given element.
+     */
+    public static boolean hasOppositeAffinity(Player player, Element element) {
+        Element affinity = getAffinity(player);
+        return affinity != null && SoulmarkElements.getOpposite(affinity) == element;
+    }
+
     // ── Discovery state ─────────────────────────────────────────────────────
 
     private static final String REVEALED_KEY = "soulmark_affinity_revealed";

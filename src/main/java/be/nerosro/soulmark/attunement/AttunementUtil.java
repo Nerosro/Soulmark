@@ -37,6 +37,13 @@ public final class AttunementUtil {
     }
 
     /**
+     * Returns true when the player is attuned to the given element.
+     */
+    public static boolean isAttunedTo(Player player, Element element) {
+        return getAttunement(player) == element;
+    }
+
+    /**
      * Sets the player's attuned element. Can be called multiple times to re-attune.
      * Calling this replaces any existing attunement.
      */
