@@ -16,9 +16,16 @@ import net.neoforged.neoforge.client.event.ClientTickEvent;
  */
 public class SoulmarkInputHandler {
 
+    private boolean actionKeyWasDown;
+
     @SubscribeEvent
     public void onClientTick(ClientTickEvent.Post event) {
-        if (!SkillTreeKeybinds.OPEN_SKILL_TREE.consumeClick()) return;
+        boolean actionKeyIsDown = SkillTreeKeybinds.OPEN_SKILL_TREE.isDown();
+        if (actionKeyIsDown || !actionKeyWasDown) {
+            actionKeyWasDown = actionKeyIsDown;
+            return;
+        }
+        actionKeyWasDown = false;
 
         Minecraft mc = Minecraft.getInstance();
         Player player = mc.player;
@@ -41,14 +48,17 @@ public class SoulmarkInputHandler {
         // Check off-hand for radial menu opener (wand)
         ItemStack offHandStack = player.getOffhandItem();
         RadialMenuOpeners.OpenerRegistration radial = RadialMenuOpeners.getOpenerForItem(offHandStack);
-        if (radial == null) return;
+        if (radial != null) {
+            var entries = radial.entryProvider().apply(player);
+            if (entries != null && !entries.isEmpty()) {
+                Identifier equipped = radial.equippedProvider() != null
+                        ? radial.equippedProvider().apply(player)
+                        : null;
+                RadialMenuOverlay.open(entries, selected -> radial.onSelect().accept(player, selected), equipped);
+                return;
+            }
+        }
 
-        var entries = radial.entryProvider().apply(player);
-        if (entries == null || entries.isEmpty()) return;
-
-        Identifier equipped = radial.equippedProvider() != null
-                ? radial.equippedProvider().apply(player)
-                : null;
-        RadialMenuOverlay.open(entries, selected -> radial.onSelect().accept(player, selected), equipped);
+        ContextualKeyActions.tryHandle(player);
     }
 }
