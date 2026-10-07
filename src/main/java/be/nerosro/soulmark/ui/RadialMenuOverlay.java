@@ -1,5 +1,12 @@
 package be.nerosro.soulmark.ui;
 
+import java.util.List;
+import java.util.function.Consumer;
+
+import org.jspecify.annotations.Nullable;
+import org.lwjgl.glfw.GLFW;
+
+import be.nerosro.soulmark.skilltree.KeybindInput;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -10,11 +17,6 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.client.gui.GuiLayer;
-import org.jspecify.annotations.Nullable;
-import org.lwjgl.glfw.GLFW;
-
-import java.util.List;
-import java.util.function.Consumer;
 
 /**
  * Overlay-based radial selection menu that allows player movement.
@@ -58,9 +60,9 @@ public class RadialMenuOverlay implements GuiLayer {
     /**
      * Opens the radial menu overlay.
      *
-     * @param menuEntries       The entries to display
-     * @param selectCallback    Called when the player selects an entry
-     * @param equipped          The node ID of the currently equipped ability, or null
+     * @param menuEntries    The entries to display
+     * @param selectCallback Called when the player selects an entry
+     * @param equipped       The node ID of the currently equipped ability, or null
      */
     public static void open(List<RadialMenuEntry> menuEntries, Consumer<RadialMenuEntry> selectCallback,
                             @Nullable Identifier equipped) {
@@ -190,7 +192,7 @@ public class RadialMenuOverlay implements GuiLayer {
     public void onKey(InputEvent.Key event) {
         if (!active) return;
 
-        if (event.getKey() == GLFW.GLFW_KEY_ESCAPE && event.getAction() == GLFW.GLFW_PRESS) {
+        if (event.getKey() == GLFW.GLFW_KEY_ESCAPE && KeybindInput.isInitialPress(event)) {
             close();
         }
     }
@@ -263,7 +265,7 @@ public class RadialMenuOverlay implements GuiLayer {
             int iconSize = 16;
             int halfIcon = iconSize / 2;
             graphics.blit(RenderPipelines.GUI_TEXTURED, entry.icon(),
-                    ex - halfIcon, ey - halfIcon, 0, 0, iconSize, iconSize, iconSize, iconSize);
+                ex - halfIcon, ey - halfIcon, 0, 0, iconSize, iconSize, iconSize, iconSize);
         } else {
             int iconColor = isHovered ? LABEL_COLOR : UiRenderUtil.dimColor(entry.color(), 0.9f);
             graphics.centeredText(mc.font, Component.literal(entry.iconChar()), ex, ey - 4, iconColor);

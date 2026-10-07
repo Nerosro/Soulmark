@@ -8,7 +8,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.InputEvent;
 
 /**
  * Client-side handler for the Soulmark keybind.
@@ -16,20 +16,20 @@ import net.neoforged.neoforge.client.event.ClientTickEvent;
  */
 public class SoulmarkInputHandler {
 
-    private boolean actionKeyWasDown;
-
     @SubscribeEvent
-    public void onClientTick(ClientTickEvent.Post event) {
-        boolean actionKeyIsDown = SkillTreeKeybinds.OPEN_SKILL_TREE.isDown();
-        if (actionKeyIsDown || !actionKeyWasDown) {
-            actionKeyWasDown = actionKeyIsDown;
+    public void onKey(InputEvent.Key event) {
+        if (!KeybindInput.isInitialPress(event, SkillTreeKeybinds.OPEN_SKILL_TREE)) {
             return;
         }
-        actionKeyWasDown = false;
 
         Minecraft mc = Minecraft.getInstance();
         Player player = mc.player;
         if (player == null) return;
+
+        if (mc.screen instanceof SkillTreeScreen) {
+            mc.setScreen(null);
+            return;
+        }
 
         // If radial menu is already open, close it (toggle behavior)
         if (RadialMenuOverlay.isActive()) {
@@ -52,8 +52,8 @@ public class SoulmarkInputHandler {
             var entries = radial.entryProvider().apply(player);
             if (entries != null && !entries.isEmpty()) {
                 Identifier equipped = radial.equippedProvider() != null
-                        ? radial.equippedProvider().apply(player)
-                        : null;
+                    ? radial.equippedProvider().apply(player)
+                    : null;
                 RadialMenuOverlay.open(entries, selected -> radial.onSelect().accept(player, selected), equipped);
                 return;
             }

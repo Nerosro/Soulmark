@@ -182,11 +182,6 @@ public class SkillTreeScreen extends Screen {
             return true;
         }
 
-        if (SkillTreeKeybinds.OPEN_SKILL_TREE.matches(event)) {
-            this.onClose();
-            return true;
-        }
-
         return super.keyPressed(event);
     }
 
