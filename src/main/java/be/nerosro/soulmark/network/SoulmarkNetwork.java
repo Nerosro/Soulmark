@@ -1,5 +1,9 @@
 package be.nerosro.soulmark.network;
 
+import java.util.function.Function;
+
+import org.jspecify.annotations.Nullable;
+
 import be.nerosro.soulmark.SoulMark;
 import be.nerosro.soulmark.affinity.AffinityData;
 import be.nerosro.soulmark.affinity.AffinityUtil;
@@ -9,29 +13,28 @@ import be.nerosro.soulmark.element.ElementRegistry;
 import be.nerosro.soulmark.element.SoulmarkElements;
 import be.nerosro.soulmark.mana.ManaData;
 import be.nerosro.soulmark.mana.ManaUtil;
-import be.nerosro.soulmark.soulpoint.SoulPointUtil;
 import be.nerosro.soulmark.skilltree.SkillTreeUtil;
+import be.nerosro.soulmark.soulpoint.SoulPointUtil;
 import be.nerosro.soulmark.traits.TraitUtil;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
-import org.jspecify.annotations.Nullable;
-
-import java.util.function.Function;
 
 /**
  * Handles registration and sending of all Soulmark network payloads.
  */
 public final class SoulmarkNetwork {
 
-    private static final String PROTOCOL_VERSION = "1";
+    private static final String PROTOCOL_VERSION = "2";
 
     @Nullable
     private static Function<ServerPlayer, ManaModifiers> manaModifierProvider = null;
+    private static Function<ServerPlayer, Byte> manaCollapseKnowledgeProvider = _ -> (byte) 0;
 
-    private SoulmarkNetwork() {}
+    private SoulmarkNetwork() {
+    }
 
     /**
      * Registers all payload types. Called from the mod bus.
@@ -41,43 +44,43 @@ public final class SoulmarkNetwork {
 
         // Mana sync: server → client (handlers already run on main thread via PayloadRegistrar default)
         registrar.playToClient(
-                ManaSyncPayload.TYPE,
-                ManaSyncPayload.STREAM_CODEC,
-                (payload, context) -> ClientManaData.update(payload)
+            ManaSyncPayload.TYPE,
+            ManaSyncPayload.STREAM_CODEC,
+            (payload, context) -> ClientManaData.update(payload)
         );
 
         // Skill tree sync: server → client
         registrar.playToClient(
-                SkillTreeSyncPayload.TYPE,
-                SkillTreeSyncPayload.STREAM_CODEC,
-                (payload, context) -> {
-                    SoulMark.LOGGER.debug("Client received skill tree sync: {} nodes, {} Soul Points",
-                        payload.unlockedNodes().size(), payload.availableSoulPoints());
-                    ClientSkillTreeData.update(payload);
-                }
+            SkillTreeSyncPayload.TYPE,
+            SkillTreeSyncPayload.STREAM_CODEC,
+            (payload, context) -> {
+                SoulMark.LOGGER.debug("Client received skill tree sync: {} nodes, {} Soul Points",
+                    payload.unlockedNodes().size(), payload.availableSoulPoints());
+                ClientSkillTreeData.update(payload);
+            }
         );
 
         // Attunement sync: server → client
         registrar.playToClient(
-                AttunementSyncPayload.TYPE,
-                AttunementSyncPayload.STREAM_CODEC,
-                (payload, context) -> ClientAttunementData.update(payload)
+            AttunementSyncPayload.TYPE,
+            AttunementSyncPayload.STREAM_CODEC,
+            (payload, context) -> ClientAttunementData.update(payload)
         );
 
         // Skill node unlock request: client → server
         registrar.playToServer(
-                SkillNodeUnlockPayload.TYPE,
-                SkillNodeUnlockPayload.STREAM_CODEC,
-                (payload, context) -> {
-                    ServerPlayer player = (ServerPlayer) context.player();
-                    SkillTreeUtil.UnlockResult result = SkillTreeUtil.tryUnlockDetailed(player, payload.nodeId());
-                    if (result == SkillTreeUtil.UnlockResult.SUCCESS) {
-                        SoulMark.LOGGER.debug("Player {} unlocked node {}", player.getName().getString(), payload.nodeId());
-                        syncSkillTree(player);
-                    } else {
-                        SoulMark.LOGGER.debug("Player {} failed to unlock node {}: {}", player.getName().getString(), payload.nodeId(), result);
-                    }
+            SkillNodeUnlockPayload.TYPE,
+            SkillNodeUnlockPayload.STREAM_CODEC,
+            (payload, context) -> {
+                ServerPlayer player = (ServerPlayer) context.player();
+                SkillTreeUtil.UnlockResult result = SkillTreeUtil.tryUnlockDetailed(player, payload.nodeId());
+                if (result == SkillTreeUtil.UnlockResult.SUCCESS) {
+                    SoulMark.LOGGER.debug("Player {} unlocked node {}", player.getName().getString(), payload.nodeId());
+                    syncSkillTree(player);
+                } else {
+                    SoulMark.LOGGER.debug("Player {} failed to unlock node {}: {}", player.getName().getString(), payload.nodeId(), result);
                 }
+            }
         );
     }
 
@@ -90,38 +93,37 @@ public final class SoulmarkNetwork {
     }
 
     /**
-     * Sends the current mana state to the given player's client.
+     * Allows job mods to provide client-visible collapse knowledge without Soulmark depending on them.
      */
-    public static void syncMana(ServerPlayer player) {
-        syncMana(player, false);
+    public static void setManaCollapseKnowledgeProvider(Function<ServerPlayer, Byte> provider) {
+        manaCollapseKnowledgeProvider = provider;
     }
 
     /**
-     * Sends the current mana state to the given player's client, with optional Elemancy-specific flags.
-     * @param hasExperiencedManaCollapse Elemancy-specific flag for Mana Collapse discovery
+     * Sends the current mana state to the given player's client.
      */
-    public static void syncMana(ServerPlayer player, boolean hasExperiencedManaCollapse) {
+    public static void syncMana(ServerPlayer player) {
         ManaData mana = ManaUtil.getMana(player);
         boolean affinityRevealed = AffinityUtil.isAffinityRevealed(player);
         boolean traitsRevealed = TraitUtil.isTraitsRevealed(player);
         boolean scarsRevealed = TraitUtil.isScarsRevealed(player);
         Identifier affinityId = resolveAffinityId(player);
-        
-        ManaModifiers modifiers = manaModifierProvider != null 
-                ? manaModifierProvider.apply(player) 
-                : ManaModifiers.NONE;
-        
+
+        ManaModifiers modifiers = manaModifierProvider != null
+            ? manaModifierProvider.apply(player)
+            : ManaModifiers.NONE;
+
         PacketDistributor.sendToPlayer(player, new ManaSyncPayload(
-                mana.getCurrentMana(),
-                mana.getMaxPool(),
-                mana.getOriginMaxPool(),
-                modifiers.poolBonus(),
-                modifiers.regenBonus(),
-                affinityRevealed,
-                traitsRevealed,
-                scarsRevealed,
-                hasExperiencedManaCollapse,
-                affinityId
+            mana.getCurrentMana(),
+            mana.getMaxPool(),
+            mana.getOriginMaxPool(),
+            modifiers.poolBonus(),
+            modifiers.regenBonus(),
+            affinityRevealed,
+            traitsRevealed,
+            scarsRevealed,
+            manaCollapseKnowledgeProvider.apply(player),
+            affinityId
         ));
     }
 

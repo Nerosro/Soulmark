@@ -19,10 +19,11 @@ public final class ClientManaData {
     private static boolean affinityRevealed;
     private static boolean traitsRevealed;
     private static boolean scarsRevealed;
-    private static boolean hasExperiencedManaCollapse;
+    private static byte manaCollapseKnowledge;
     private static Element affinity;
 
-    private ClientManaData() {}
+    private ClientManaData() {
+    }
 
     public static void update(ManaSyncPayload payload) {
         currentMana = payload.currentMana();
@@ -33,8 +34,8 @@ public final class ClientManaData {
         affinityRevealed = payload.affinityRevealed();
         traitsRevealed = payload.traitsRevealed();
         scarsRevealed = payload.scarsRevealed();
-        hasExperiencedManaCollapse = payload.hasExperiencedManaCollapse();
-        
+        manaCollapseKnowledge = payload.manaCollapseKnowledge();
+
         Identifier affinityId = payload.affinityId();
         if (affinityId != null) {
             ResourceKey<Element> key = ResourceKey.create(ElementRegistry.ELEMENT_REGISTRY_KEY, affinityId);
@@ -76,11 +77,13 @@ public final class ClientManaData {
         return scarsRevealed;
     }
 
-    public static boolean hasExperiencedManaCollapse() {
-        return hasExperiencedManaCollapse;
+    public static byte getManaCollapseKnowledge() {
+        return manaCollapseKnowledge;
     }
 
-    /** Returns the player's affinity Element, or null if not initialized. */
+    /**
+     * Returns the player's affinity Element, or null if not initialized.
+     */
     public static Element getAffinity() {
         return affinity;
     }
