@@ -1,15 +1,18 @@
 package be.nerosro.soulmark.skilltree;
 
-import be.nerosro.soulmark.network.ClientSkillTreeData;
-import be.nerosro.soulmark.network.ClientSkillTreeQuery;
-import net.minecraft.resources.Identifier;
-import net.minecraft.resources.ResourceKey;
-import org.jspecify.annotations.Nullable;
+import static be.nerosro.soulmark.skilltree.SkillTreeScreenConstants.Layout;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.jspecify.annotations.Nullable;
+
+import be.nerosro.soulmark.network.ClientSkillTreeData;
+import be.nerosro.soulmark.network.ClientSkillTreeQuery;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 
 /**
  * Builds and holds the client-side render cache for a single skill tree page.
@@ -44,11 +47,11 @@ public final class SkillTreeNodeCache {
             int pixelX;
             int pixelY;
             if (horizontal) {
-                pixelX = node.depth() * SkillTreeScreenConstants.Layout.DEPTH_SPACING;
-                pixelY = node.lane() * SkillTreeScreenConstants.Layout.LANE_SPACING;
+                pixelX = node.depth() * Layout.DEPTH_SPACING;
+                pixelY = node.lane() * Layout.LANE_SPACING;
             } else {
-                pixelX = node.lane() * SkillTreeScreenConstants.Layout.LANE_SPACING;
-                pixelY = node.depth() * SkillTreeScreenConstants.Layout.DEPTH_SPACING;
+                pixelX = node.lane() * Layout.LANE_SPACING;
+                pixelY = node.depth() * Layout.DEPTH_SPACING;
             }
 
             boolean excluded = isExcluded(nodeId);
@@ -70,8 +73,8 @@ public final class SkillTreeNodeCache {
             Identifier otherId = entry.getKey().identifier();
             if (otherId.equals(nodeId)) continue;
             if (node.exclusionGroup().equals(other.exclusionGroup())
-                    && other.nodeType() == NodeType.SPECIALIZATION
-                    && ClientSkillTreeData.isUnlocked(otherId)) {
+                && other.nodeType() == NodeType.SPECIALIZATION
+                && ClientSkillTreeData.isUnlocked(otherId)) {
                 return true;
             }
         }
@@ -92,11 +95,12 @@ public final class SkillTreeNodeCache {
      * exclusion state as of the last {@link #rebuild(Identifier)} call.
      */
     public record NodeEntry(
-            Identifier nodeId,
-            SkillNode node,
-            int pixelX,
-            int pixelY,
-            NodeVisibility visibility,
-            boolean excluded
-    ) {}
+        Identifier nodeId,
+        SkillNode node,
+        int pixelX,
+        int pixelY,
+        NodeVisibility visibility,
+        boolean excluded
+    ) {
+    }
 }

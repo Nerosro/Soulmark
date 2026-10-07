@@ -1,5 +1,11 @@
 package be.nerosro.soulmark.skilltree;
 
+import static be.nerosro.soulmark.skilltree.SkillTreeScreenConstants.Layout;
+import static be.nerosro.soulmark.skilltree.SkillTreeScreenConstants.UI_Colors;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import be.nerosro.soulmark.network.ClientSkillTreeQuery;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.Font;
@@ -7,18 +13,16 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Draws the hover tooltip for a skill tree node, describing its unlock state.
  */
 public final class SkillTreeTooltipRenderer {
 
-    private SkillTreeTooltipRenderer() {}
+    private SkillTreeTooltipRenderer() {
+    }
 
     public static void draw(GuiGraphicsExtractor graphics, Font font, SkillTreeNodeCache cache,
-                             int screenWidth, int screenHeight, int mouseX, int mouseY, Identifier nodeId) {
+                            int screenWidth, int screenHeight, int mouseX, int mouseY, Identifier nodeId) {
         SkillNode node = SkillTreeRegistries.NODE_REGISTRY.getValue(nodeId);
         if (node == null) return;
 
@@ -31,7 +35,7 @@ public final class SkillTreeTooltipRenderer {
                 lines.add(Component.literal(node.description()).withStyle(ChatFormatting.GRAY));
             }
             lines.add(Component.literal("Type: ").withStyle(ChatFormatting.GREEN)
-                    .append(Component.literal(node.nodeType().displayName()).withStyle(ChatFormatting.WHITE)));
+                .append(Component.literal(node.nodeType().displayName()).withStyle(ChatFormatting.WHITE)));
             lines.add(Component.literal("Unlocked ✓").withStyle(ChatFormatting.GREEN));
         } else if (visibility == NodeVisibility.UNLOCKABLE) {
             SkillTreeNodeCache.NodeEntry entry = cache.get(nodeId);
@@ -50,7 +54,7 @@ public final class SkillTreeTooltipRenderer {
                 } else {
                     ChatFormatting costColor = node.soulGate() ? ChatFormatting.RED : ChatFormatting.YELLOW;
                     lines.add(Component.literal("Cost: ").withStyle(ChatFormatting.GRAY)
-                            .append(Component.literal(node.cost() + " " + payment.displayName()).withStyle(costColor)));
+                        .append(Component.literal(node.cost() + " " + payment.displayName()).withStyle(costColor)));
                     if (payment.getClientAvailableBalance() >= node.cost()) {
                         lines.add(Component.literal("Click to unlock").withStyle(ChatFormatting.GREEN));
                     } else {
@@ -58,7 +62,7 @@ public final class SkillTreeTooltipRenderer {
                     }
                 }
                 lines.add(Component.literal("Type: ").withStyle(ChatFormatting.GRAY)
-                        .append(Component.literal(node.nodeType().displayName()).withStyle(ChatFormatting.WHITE)));
+                    .append(Component.literal(node.nodeType().displayName()).withStyle(ChatFormatting.WHITE)));
             }
         } else if (visibility == NodeVisibility.SCRAMBLED) {
             lines.add(SkillTreeNodeRenderer.scrambledTooltipLabel(node.name()));
@@ -74,8 +78,8 @@ public final class SkillTreeTooltipRenderer {
         for (Component line : lines) {
             maxWidth = Math.max(maxWidth, font.width(line));
         }
-        int padding = SkillTreeScreenConstants.Layout.TOOLTIP_PADDING;
-        int lineHeight = SkillTreeScreenConstants.Layout.TOOLTIP_LINE_HEIGHT;
+        int padding = Layout.TOOLTIP_PADDING;
+        int lineHeight = Layout.TOOLTIP_LINE_HEIGHT;
         int tooltipWidth = maxWidth + padding * 2;
         int tooltipHeight = lines.size() * lineHeight + padding * 2;
 
@@ -85,9 +89,9 @@ public final class SkillTreeTooltipRenderer {
         if (ty + tooltipHeight > screenHeight) ty = screenHeight - tooltipHeight;
         if (ty < 0) ty = 0;
 
-        int bg = SkillTreeScreenConstants.Colors.TOOLTIP_BG;
-        int borderTop = SkillTreeScreenConstants.Colors.TOOLTIP_BORDER_TOP;
-        int borderBottom = SkillTreeScreenConstants.Colors.TOOLTIP_BORDER_BOTTOM;
+        int bg = UI_Colors.TOOLTIP_BG;
+        int borderTop = UI_Colors.TOOLTIP_BORDER_TOP;
+        int borderBottom = UI_Colors.TOOLTIP_BORDER_BOTTOM;
 
         graphics.fillGradient(tx, ty, tx + tooltipWidth, ty + tooltipHeight, bg, bg);
         graphics.fillGradient(tx, ty, tx + tooltipWidth, ty + 1, borderTop, borderTop);
@@ -97,7 +101,7 @@ public final class SkillTreeTooltipRenderer {
 
         for (int i = 0; i < lines.size(); i++) {
             graphics.text(font, lines.get(i),
-                    tx + padding, ty + padding + i * lineHeight, SkillTreeScreenConstants.Colors.TEXT_READABLE);
+                tx + padding, ty + padding + i * lineHeight, UI_Colors.TEXT_READABLE);
         }
     }
 }
